@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="YZ destekli görev yönetim uygulaması - Vanilla JavaScript, Supabase, Claude ve n8n" />
+  <title>AI Task Manager</title>
+  <link rel="stylesheet" href="./styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">İçeriğe geç</a>
+
+  <header class="site-header">
+    <div>
+      <h1>AI Task Manager</h1>
+      <p class="subtitle">Vanilla JavaScript + Supabase + Claude + n8n</p>
+    </div>
+    <div id="sessionBox" class="session-box" hidden>
+      <span id="sessionEmail"></span>
+      <button id="logoutBtn" class="btn btn-secondary" type="button">Çıkış</button>
+    </div>
+  </header>
+
+  <main id="main" class="container">
+    <section id="authSection" class="panel auth-grid" aria-labelledby="authTitle">
+      <div>
+        <h2 id="authTitle">Giriş Yap</h2>
+        <form id="loginForm" novalidate>
+          <label for="loginEmail">E-posta</label>
+          <input id="loginEmail" name="email" type="email" autocomplete="email" required />
+
+          <label for="loginPassword">Şifre</label>
+          <input id="loginPassword" name="password" type="password" autocomplete="current-password" minlength="6" required />
+
+          <button class="btn" type="submit">Giriş Yap</button>
+        </form>
+      </div>
+
+      <div>
+        <h2>Kayıt Ol</h2>
+        <form id="registerForm" novalidate>
+          <label for="registerEmail">E-posta</label>
+          <input id="registerEmail" name="email" type="email" autocomplete="email" required />
+
+          <label for="registerPassword">Şifre</label>
+          <input id="registerPassword" name="password" type="password" autocomplete="new-password" minlength="6" required />
+
+          <button class="btn" type="submit">Kayıt Ol</button>
+        </form>
+      </div>
+    </section>
+
+    <section id="appSection" hidden>
+      <div class="dashboard-grid">
+        <section class="panel" aria-labelledby="taskFormTitle">
+          <h2 id="taskFormTitle">Görev</h2>
+          <form id="taskForm" novalidate>
+            <input id="taskId" type="hidden" />
+
+            <label for="taskTitle">Başlık</label>
+            <input id="taskTitle" type="text" maxlength="120" required />
+
+            <label for="taskDescription">Açıklama</label>
+            <textarea id="taskDescription" rows="4" maxlength="1200"></textarea>
+
+            <div class="two-col">
+              <div>
+                <label for="taskStatus">Durum</label>
+                <select id="taskStatus">
+                  <option value="todo">Yapılacak</option>
+                  <option value="in_progress">Devam Ediyor</option>
+                  <option value="done">Tamamlandı</option>
+                </select>
+              </div>
+              <div>
+                <label for="taskPriority">Öncelik</label>
+                <select id="taskPriority">
+                  <option value="low">Düşük</option>
+                  <option value="normal" selected>Normal</option>
+                  <option value="high">Yüksek</option>
+                </select>
+              </div>
+            </div>
+
+            <label for="taskDueDate">Bitiş Tarihi</label>
+            <input id="taskDueDate" type="date" />
+
+            <div class="button-row">
+              <button id="saveTaskBtn" class="btn" type="submit">Kaydet</button>
+              <button id="cancelEditBtn" class="btn btn-secondary" type="button" hidden>Düzenlemeyi İptal Et</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="panel" aria-labelledby="aiTitle">
+          <h2 id="aiTitle">✨ AI ile Görev Oluştur</h2>
+          <p class="muted">İsteğini doğal dille yaz. Öneri önce forma gelir; onaylamadan veritabanına kaydedilmez.</p>
+          <label for="aiPrompt">Görev isteği</label>
+          <textarea id="aiPrompt" rows="6" placeholder="Örn: Cuma günkü müşteri demosu için sunumu, testleri ve prova adımlarını planla."></textarea>
+          <button id="aiSuggestBtn" class="btn" type="button">AI Önerisi Oluştur</button>
+          <div id="aiResult" class="notice" aria-live="polite" hidden></div>
+        </section>
+      </div>
+
+      <section class="panel" aria-labelledby="tasksTitle">
+        <div class="section-header">
+          <div>
+            <h2 id="tasksTitle">Görevlerim</h2>
+            <p class="muted">RLS sayesinde yalnızca oturum açmış kullanıcıya ait kayıtlar gösterilir.</p>
+          </div>
+          <button id="refreshBtn" class="btn btn-secondary" type="button">Yenile</button>
+        </div>
+        <div id="taskList" class="task-list" aria-live="polite"></div>
+      </section>
+
+      <section class="panel" aria-labelledby="feedbackTitle">
+        <h2 id="feedbackTitle">Geri Bildirim</h2>
+        <form id="feedbackForm" novalidate>
+          <label for="feedbackType">Tür</label>
+          <select id="feedbackType">
+            <option value="bug">Bug</option>
+            <option value="feature">Özellik İsteği</option>
+            <option value="ux">UX</option>
+            <option value="other">Diğer</option>
+          </select>
+
+          <label for="feedbackMessage">Mesaj</label>
+          <textarea id="feedbackMessage" rows="4" maxlength="2000" required></textarea>
+
+          <button class="btn" type="submit">Gönder</button>
+        </form>
+      </section>
+    </section>
+
+    <div id="globalMessage" class="toast" role="status" aria-live="polite" hidden></div>
+  </main>
+
+  <script src="./app.js"></script>
+</body>
+</html>

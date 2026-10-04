@@ -1,0 +1,159 @@
+{
+  "name": "AI Task Manager - Webhook + HTTP Callback",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ai-task-event",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "1b3eb2cc-1eac-43d0-b0a5-6a19aa0d6751",
+      "name": "Task Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "replace-after-import",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "RqDBvCb4IbdcPnrI",
+          "name": "Header Auth account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "taskId",
+              "value": "={{ $json.body.task.id }}",
+              "type": "string"
+            },
+            {
+              "id": "a2",
+              "name": "title",
+              "value": "={{ $json.body.task.title }}",
+              "type": "string"
+            },
+            {
+              "id": "a3",
+              "name": "priority",
+              "value": "={{ $json.body.task.priority }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "4e419d57-e7a9-407b-8b13-8948b284c483",
+      "name": "Normalize Task",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ai-task-manager-three-eta.vercel.app/api/n8n-callback",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": []
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={\"taskId\":\"{{$json.taskId}}\",\"status\":\"processed\"}",
+        "options": {}
+      },
+      "id": "fc96a013-98c1-4b93-8c6b-e3be7b3fbef2",
+      "name": "Callback to Vercel",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        0
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "uu1MPxFJNeIwbvBI",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\"ok\":true,\"message\":\"Workflow completed\",\"taskId\":\"{{$('Normalize Task').item.json.taskId}}\"}",
+        "options": {}
+      },
+      "id": "bce6c18c-7d76-49bc-9ffe-4def39bd100e",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        720,
+        0
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Task Webhook": {
+      "main": [
+        [
+          {
+            "node": "Normalize Task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Task": {
+      "main": [
+        [
+          {
+            "node": "Callback to Vercel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Callback to Vercel": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "a876c238-9e06-471b-9007-b447647c48e4",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "120d06117a4c4c5155e98d68b5f14309aa3de6986b64f8441bb587bade2b5f0f"
+  },
+  "nodeGroups": [],
+  "id": "tvNfUy9U6M2uB3y1",
+  "tags": []
+}

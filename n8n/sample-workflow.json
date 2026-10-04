@@ -1,0 +1,104 @@
+{
+  "name": "AI Task Manager - Webhook + HTTP Callback",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ai-task-event",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-1",
+      "name": "Task Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [260, 300],
+      "webhookId": "replace-after-import"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "taskId",
+              "value": "={{ $json.body.task.id }}",
+              "type": "string"
+            },
+            {
+              "id": "a2",
+              "name": "title",
+              "value": "={{ $json.body.task.title }}",
+              "type": "string"
+            },
+            {
+              "id": "a3",
+              "name": "priority",
+              "value": "={{ $json.body.task.priority }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-1",
+      "name": "Normalize Task",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://YOUR-APP.vercel.app/api/n8n-callback",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Callback-Secret",
+              "value": "={{ $env.N8N_CALLBACK_SECRET }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={\"taskId\":\"{{$json.taskId}}\",\"status\":\"processed\"}",
+        "options": {}
+      },
+      "id": "http-1",
+      "name": "Callback to Vercel",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [740, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\"ok\":true,\"message\":\"Workflow completed\",\"taskId\":\"{{$('Normalize Task').item.json.taskId}}\"}",
+        "options": {}
+      },
+      "id": "respond-1",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [980, 300]
+    }
+  ],
+  "connections": {
+    "Task Webhook": {
+      "main": [[{"node":"Normalize Task","type":"main","index":0}]]
+    },
+    "Normalize Task": {
+      "main": [[{"node":"Callback to Vercel","type":"main","index":0}]]
+    },
+    "Callback to Vercel": {
+      "main": [[{"node":"Respond to Webhook","type":"main","index":0}]]
+    }
+  },
+  "active": false,
+  "settings": {"executionOrder":"v1"},
+  "versionId": "00000000-0000-0000-0000-000000000001",
+  "meta": {"templateCredsSetupCompleted": false},
+  "tags": []
+}
