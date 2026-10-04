@@ -1,0 +1,247 @@
+{
+  "name": "AI Task Manager - Claude Integration DEV3",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ai-task-event-claude-dev3",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "e00f9256-4a6c-431a-8201-b99680ef0cef",
+      "name": "Task Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -544,
+        -144
+      ],
+      "webhookId": "replace-after-import"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "taskId",
+              "value": "={{ $json.body.task.id }}",
+              "type": "string"
+            },
+            {
+              "id": "a2",
+              "name": "title",
+              "value": "={{ $json.body.task.title }}",
+              "type": "string"
+            },
+            {
+              "id": "a3",
+              "name": "priority",
+              "value": "={{ $json.body.task.priority }}",
+              "type": "string"
+            },
+            {
+              "id": "1b4ec904-52d0-43d4-bd3a-e10af434068c",
+              "name": "description",
+              "value": "={{ $json.body.task.description }}",
+              "type": "string"
+            },
+            {
+              "id": "aaafebde-dee5-4c35-9628-95aa952cb553",
+              "name": "dueDate",
+              "value": "={{ $json.body.task.due_date }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "07f186c3-c302-4eaa-9241-38fd9bac4da0",
+      "name": "Normalize Task",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -336,
+        -128
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ai-task-manager3.vercel.app/api/n8n-callback",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": []
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={\n  \"taskId\": \"{{ $('Normalize Task').item.json.taskId }}\",\n  \"status\": \"processed\",\n  \"aiAnalysis\": {{ JSON.stringify($json.aiAnalysis) }}\n}",
+        "options": {}
+      },
+      "id": "8380bbe2-59cd-4576-94a9-1829670ac2fa",
+      "name": "Callback to Vercel",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        320,
+        -64
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "CjxPzbft3mWhTl4E",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\"ok\":true,\"message\":\"Workflow completed\",\"taskId\":\"{{$('Normalize Task').item.json.taskId}}\"}",
+        "options": {}
+      },
+      "id": "30a59cd2-98cd-4ff4-aa31-54c3f6e880ce",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        480,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "claude-sonnet-5-5",
+          "mode": "list",
+          "cachedResultName": "claude-sonnet-5-5"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Bugünün tarihi: {{ $now.toFormat('yyyy-MM-dd') }}\n\nAşağıdaki görevi profesyonel bir görev yönetimi asistanı olarak analiz et.\n\nGörev Başlığı: {{ $json.title }}\nGörev Açıklaması: {{ $json.description }}\nÖncelik: {{ $json.priority }}\nBitiş Tarihi: {{ $json.dueDate }}\n\nÖNEMLİ:\nBitiş tarihini mutlaka yukarıdaki bugünün tarihi ile karşılaştır.\nBitiş tarihi bugünse görevin bugün tamamlanması gerektiğini belirt.\nBitiş tarihi geçmişse gecikmiş olduğunu belirt.\nBitiş tarihi gelecekteyse kalan süreyi dikkate alarak gerçekçi bir plan oluştur.\nTarih hakkında varsayım yapma.\n\nBu görev için:\n\n1. Görevin kısa analizini yap.\n2. Yapılması gereken somut aksiyonları sırala.\n3. Mevcut öncelik seviyesini değerlendir.\n4. Bitiş tarihini bugünün tarihiyle karşılaştırarak uygulanabilir bir çalışma planı öner.\n5. Olası risk veya gecikme nedenlerini belirt.\n6. En önemli sonraki adımı belirt.\n\nYanıtını Türkçe, açık ve kısa paragraflarla ver."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.anthropic",
+      "typeVersion": 1,
+      "position": [
+        -192,
+        -96
+      ],
+      "id": "3758ea6c-da79-4ffc-82a9-2b62703c1479",
+      "name": "Message a model",
+      "credentials": {
+        "anthropicApi": {
+          "id": "FeW7zNXqRmk6uLeJ",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c5fea849-c25c-4465-b83f-890268ea7bd9",
+              "name": "aiAnalysis",
+              "value": "={{ $json.content[0].text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        112,
+        -112
+      ],
+      "id": "a93e608d-6d87-423c-a447-3ac9e5f0ed17",
+      "name": "Edit Fields"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Task Webhook": {
+      "main": [
+        [
+          {
+            "node": "Normalize Task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Task": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Callback to Vercel": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Callback to Vercel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "47dc574b-16a6-419a-b8e8-1e548ddbd251",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9b0bb58ab7f9fb9ec08b82d47eb8d2b03d4f06ebc9e6f3959041ac89e5a2dd62"
+  },
+  "id": "r1mI9rbynYEa1IWn",
+  "tags": [
+    {
+      "updatedAt": "2026-10-04T08:36:47.396Z",
+      "createdAt": "2026-10-04T08:36:47.396Z",
+      "id": "N8q3u8Xdw3raOqm5",
+      "name": "yeni"
+    }
+  ]
+}
